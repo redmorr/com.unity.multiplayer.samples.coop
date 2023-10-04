@@ -1,7 +1,5 @@
-﻿using Unity.BossRoom.Gameplay.Actions;
-using Unity.BossRoom.Gameplay.GameplayObjects;
+﻿using Unity.BossRoom.Gameplay.GameplayObjects;
 using Unity.BossRoom.Gameplay.GameplayObjects.Character;
-using Unity.BossRoom.VisualEffects;
 using UnityEngine;
 
 namespace Unity.BossRoom.Gameplay.Actions
@@ -14,7 +12,6 @@ namespace Unity.BossRoom.Gameplay.Actions
 
         public override bool OnStart(ServerCharacter serverCharacter)
         {
-            Debug.Log("OnStart");
             m_Interval = 0f;
             serverCharacter.serverAnimationHandler.NetworkAnimator.SetTrigger(Config.Anim);
             serverCharacter.clientCharacter.RecvDoActionClientRPC(Data);
@@ -60,7 +57,6 @@ namespace Unity.BossRoom.Gameplay.Actions
 
         public override void Reset()
         {
-            Debug.Log("Reset");
             base.Reset();
             m_AuraGraphic = null;
         }

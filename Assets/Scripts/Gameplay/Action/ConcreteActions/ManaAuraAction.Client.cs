@@ -12,7 +12,7 @@ namespace Unity.BossRoom.Gameplay.Actions
 
         public override bool OnUpdateClient(ClientCharacter clientCharacter)
         {
-            if (TimeRunning >= Config.ExecTimeSeconds)
+            if (TimeRunning > Config.ExecTimeSeconds)
             {
                 if (m_AuraGraphic == null)
                 {
@@ -53,7 +53,6 @@ namespace Unity.BossRoom.Gameplay.Actions
 
         public override void CancelClient(ClientCharacter clientCharacter)
         {
-            Debug.Log("CancelClient");
             if (m_AuraGraphic)
             {
                 m_AuraGraphic.Shutdown();

@@ -316,8 +316,6 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
         {
             ManaPoints = Mathf.Clamp(ManaPoints + manaPointsChange, 0, CharacterClass.BaseMana.Value);
             serverAnimationHandler.NetworkAnimator.SetTrigger("HitReact1");
-            //PopupManager.ShowPopupPanel("A", ManaPoints.ToString());
-            //Debug.Log(ManaPoints.ToString());
         }
 
         /// <summary>
