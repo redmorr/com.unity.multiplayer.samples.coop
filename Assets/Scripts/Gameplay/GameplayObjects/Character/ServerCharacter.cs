@@ -4,6 +4,7 @@ using Unity.BossRoom.ConnectionManagement;
 using Unity.BossRoom.Gameplay.Actions;
 using Unity.BossRoom.Gameplay.Configuration;
 using Unity.BossRoom.Gameplay.GameplayObjects.Character.AI;
+using Unity.BossRoom.Gameplay.UI;
 using Unity.Multiplayer.Samples.BossRoom;
 using Unity.Netcode;
 using UnityEngine;
@@ -16,9 +17,10 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
     /// Contains all NetworkVariables, RPCs and server-side logic of a character.
     /// This class was separated in two to keep client and server context self contained. This way you don't have to continuously ask yourself if code is running client or server side.
     /// </summary>
-    [RequireComponent(typeof(NetworkHealthState),
-        typeof(NetworkLifeState),
-        typeof(NetworkAvatarGuidState))]
+    [RequireComponent(typeof(NetworkHealthState))]
+    [RequireComponent(typeof(NetworkManaState))]
+    [RequireComponent(typeof(NetworkLifeState))]
+    [RequireComponent(typeof(NetworkAvatarGuidState))]
     public class ServerCharacter : NetworkBehaviour, ITargetable
     {
         [FormerlySerializedAs("m_ClientVisualization")]
@@ -56,6 +58,7 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
         public NetworkVariable<bool> IsStealthy { get; } = new NetworkVariable<bool>();
 
         public NetworkHealthState NetHealthState { get; private set; }
+        public NetworkManaState NetManaState { get; private set; }
 
         /// <summary>
         /// The active target of this character.
@@ -69,6 +72,12 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
         {
             get => NetHealthState.HitPoints.Value;
             private set => NetHealthState.HitPoints.Value = value;
+        }
+        
+        public int ManaPoints
+        {
+            get => NetManaState.ManaPoints.Value;
+            private set => NetManaState.ManaPoints.Value = value;
         }
 
         public NetworkLifeState NetLifeState { get; private set; }
@@ -122,6 +131,9 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
 
         [SerializeField]
         DamageReceiver m_DamageReceiver;
+        
+        [SerializeField]
+        ManaReceiver m_ManaReceiver;
 
         [SerializeField]
         ServerCharacterMovement m_Movement;
@@ -146,6 +158,7 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
             m_ServerActionPlayer = new ServerActionPlayer(this);
             NetLifeState = GetComponent<NetworkLifeState>();
             NetHealthState = GetComponent<NetworkHealthState>();
+            NetManaState = GetComponent<NetworkManaState>();
             m_State = GetComponent<NetworkAvatarGuidState>();
         }
 
@@ -157,6 +170,7 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
                 NetLifeState.LifeState.OnValueChanged += OnLifeStateChanged;
                 m_DamageReceiver.DamageReceived += ReceiveHP;
                 m_DamageReceiver.CollisionEntered += CollisionEntered;
+                m_ManaReceiver.ManaReceived += ReceiveMana;
 
                 if (IsNpc)
                 {
@@ -180,6 +194,11 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
             {
                 m_DamageReceiver.DamageReceived -= ReceiveHP;
                 m_DamageReceiver.CollisionEntered -= CollisionEntered;
+            }
+
+            if (m_ManaReceiver)
+            {
+                m_ManaReceiver.ManaReceived -= ReceiveMana;
             }
         }
 
@@ -240,6 +259,7 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
         void InitializeHitPoints()
         {
             HitPoints = CharacterClass.BaseHP.Value;
+            ManaPoints = CharacterClass.BaseMana == null ? 0 : CharacterClass.BaseMana.Value;
 
             if (!IsNpc)
             {
@@ -247,6 +267,7 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
                 if (sessionPlayerData is { HasCharacterSpawned: true })
                 {
                     HitPoints = sessionPlayerData.Value.CurrentHitPoints;
+                    ManaPoints = sessionPlayerData.Value.CurrentManaPoints;
                     if (HitPoints <= 0)
                     {
                         LifeState = LifeState.Fainted;
@@ -289,6 +310,14 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
             {
                 NetworkObject.Despawn(true);
             }
+        }
+
+        void ReceiveMana(ServerCharacter inflicter, int manaPointsChange)
+        {
+            ManaPoints = Mathf.Clamp(ManaPoints + manaPointsChange, 0, CharacterClass.BaseMana.Value);
+            serverAnimationHandler.NetworkAnimator.SetTrigger("HitReact1");
+            //PopupManager.ShowPopupPanel("A", ManaPoints.ToString());
+            //Debug.Log(ManaPoints.ToString());
         }
 
         /// <summary>
