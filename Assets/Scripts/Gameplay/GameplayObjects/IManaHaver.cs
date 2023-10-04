@@ -9,8 +9,6 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects
         
         bool IsViable();
         
-        // TODO: check if required, if shared between multiple interfaces should it be inherited?
-        // ulong NetworkObjectId { get; }
         Transform transform { get; }
     }
 }

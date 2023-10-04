@@ -6,11 +6,11 @@ using UnityEngine;
 
 namespace Unity.BossRoom.Gameplay.Actions
 {
-    [CreateAssetMenu(menuName = "BossRoom/Actions/My Test Action")]
-    public partial class MyTestAction : Action
+    [CreateAssetMenu(menuName = "BossRoom/Actions/Mage Mana Aura")]
+    public partial class ManaAuraAction : Action
     {
-        private float m_Interval;
         private Collider[] m_colliders = new Collider[4];
+        private float m_Interval;
 
         public override bool OnStart(ServerCharacter serverCharacter)
         {
@@ -31,7 +31,7 @@ namespace Unity.BossRoom.Gameplay.Actions
                     if (m_Interval <= 0)
                     {
                         m_Interval = 1f;
-                        PerformAoE(clientCharacter);
+                        RegenerateManaInRadius(clientCharacter);
                     }
                 }
                 else
@@ -43,18 +43,17 @@ namespace Unity.BossRoom.Gameplay.Actions
             return ActionConclusion.Continue;
         }
 
-        private void PerformAoE(ServerCharacter parent)
+        private void RegenerateManaInRadius(ServerCharacter parent)
         {
-            int hits = Physics.OverlapSphereNonAlloc(parent.transform.position, Config.Radius, m_colliders,
+            int numResults = Physics.OverlapSphereNonAlloc(parent.physicsWrapper.DamageCollider.transform.position, Config.Radius, m_colliders,
                 LayerMask.GetMask("PCs"));
-            for (var i = 0; i < hits; i++)
+            
+            for (var i = 0; i < numResults; i++)
             {
-                //if (colliders[i].gameObject == parent.gameObject) continue; // Ignore self ?
-                IManaHaver friend = m_colliders[i].GetComponent<IManaHaver>();
-                if (friend != null && friend.IsViable())
+                IManaHaver player = m_colliders[i].GetComponent<IManaHaver>();
+                if (player != null && player.IsViable())
                 {
-                    //InstantiateSpecialFXGraphic(Config.Spawns[1], friend.transform, true);
-                    friend.ReceiveMana(parent, Config.Amount);
+                    player.ReceiveMana(parent, Config.Amount);
                 }
             }
         }
@@ -63,7 +62,7 @@ namespace Unity.BossRoom.Gameplay.Actions
         {
             Debug.Log("Reset");
             base.Reset();
-            m_AuraGraphics = null;
+            m_AuraGraphic = null;
         }
     }
 }
